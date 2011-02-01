@@ -1,12 +1,15 @@
 <?php
 
-function flatatt($attrs) {
     /*
     Convert a array of attributes to a single string.
     The returned string will contain a leading space followed by key="value",
     XML-style pairs.  It is assumed that the keys do not need to be XML-escaped.
-    If the passed array is empty, then return an empty string.
+    If passed empty arrry or null, returns an empty string.
     */
+function flatatt($attrs) {
+    if(!$attrs) {
+        return '';
+    }
 
     $out = '';
     foreach($attrs as $k=>$v) {

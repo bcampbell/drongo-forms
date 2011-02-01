@@ -5,8 +5,11 @@ require_once 'widgets.php';
 define( 'NON_FIELD_ERRORS', '__all__' );
 
 // TODO:
-//  sort out form rendering
+//  sort out error message rendering
 //  support media (css,js)
+//  port more fields/widgets
+//  port formsets
+//  documentation/examples
 
 class BaseForm
 {
@@ -90,43 +93,137 @@ class BaseForm
     }
 
 
-//    protected function _html_output( normal_row, error_row, row_ender, help_text_html, errors_on_separate_row) {
-//    }
+    /* Helper function for outputting HTML. Used by as_table(), as_ul(), as_p(). */
+    private function _html_output($normal_row, $error_row, $row_ender, $help_text_html, $errors_on_separate_row) {
+        $top_errors = $this->non_field_errors(); //Errors that should be displayed above all fields.
+
+        $output = array();
+        $hidden_fields = array();
+
+        foreach( $this->fields as $name=>$field ) {
+            $html_class_attr = '';
+            $bf = new BoundField($this,$field,$name);
+            // escaped error strings
+            $bf_errors = $bf->errors;
+            if($bf_errors) {
+                foreach( $bf_errors as &$e ) {
+                    $e=htmlspecialchars($e);
+                }
+                unset($e);
+            } else {
+                $bf_errors = array();
+            }
+
+            if( $bf->is_hidden ) {
+                if( $bf_errors ) {
+                    foreach( $bf_errors as $e ) {
+                        $top_errors[] = sprintf('(Hidden field %s) %s',$name,$e);
+                    }
+                }
+                $hidden_fields[] = $bf;
+            } else {
+                # Create a 'class="..."' atribute if the row should have any
+                # CSS classes applied.
+                $css_classes = $bf->css_classes();
+                if($css_classes)
+                    $html_class_attr = sprintf(' class="%s"', $css_classes);
+
+                if($errors_on_separate_row and $bf_errors) {
+                    foreach( $bf_errors as $e ) {
+                        $output[] = sprintf($error_row,$e);
+                    }
+                }
+
+                if( $bf->label ) {
+                    $label = htmlspecialchars($bf->label);
+                    // Only add the suffix if the label does not end in
+                    // punctuation.
+                    if( $this->label_suffix ) {
+                        if(strpos(':?.!',substr($label,-1))===FALSE) {
+                            $label .= $this->label_suffix;
+                        }
+                    }
+                    $label = $bf->label_tag($label);
+                    $label = $label ? $label : '';
+                } else {
+                    $label = '';
+                }
+
+                $help_text='';
+                if( $field->help_text ) {
+                    $help_text = vsprintf($help_text_html, array($field->help_text));
+                }
+
+                // TODO: this isn't right. Maybe we need an extra param for formatting error lists?
+                $errors = join("\n",$bf_errors);
+
+                $params = array( $html_class_attr,
+                    $label,
+                    $bf->html(),
+                    $help_text,
+                    $errors );
+                $output[] = vsprintf( $normal_row, $params );
+            }
+        }
+        if($top_errors) {
+            foreach($top_errors as $e) {
+                array_unshift(sprintf($error_row, $e));
+            }
+        }
+
+        // Insert any hidden fields in the last row.
+        if($hidden_fields) {
+            $str_hidden = join('',$hidden_fields);
+            if($output) {
+                $last_row = array_pop($output);
+                // Chop off the trailing row_ender (e.g. '</td></tr>') and
+                // insert the hidden fields.
+                // string endswith
+                if(substr_compare($last_row, $row_ender, -strlen($row_ender), strlen($row_ender)) !== 0) {
+                    // This can happen in the as_p() case (and possibly others
+                    // that users write): if there are only top errors, we may
+                    // not be able to conscript the last row for our purposes,
+                    // so insert a new, empty row.
+                    $last_row = vsprintf($normal_row,array('','','','',$html_class_attr));
+                }
+                $last_row = substr($last_row,0,-strlen($row_ender));
+                $last_row .= $str_hidden . $row_ender;
+                $output[] = $last_row;
+            } else {
+                // If there aren't any rows in the output, just append the
+                // hidden fields.
+                $output[] = $str_hidden;
+            }
+        }
+        return join("\n",$output);
+    }
 
 
     public function as_table() {
-//        $top_errors = $this->non_field_errors();
-
-        foreach( $this->fields as $name=>$field ) {
-            $bf = new BoundField($this,$field,$name);
-
-            $html_class_attr='';
-            $errors = '';
-            if( $bf->errors )
-                $errors = join("\n",$bf->errors);
-            $help_text='';
-
-            $label='';
-            if($bf->label) {
-                // TODO: does label need escaping?
-                $label=$bf->label;
-                // TODO: sort out label suffix here
-            }
-            $out[]=sprintf( "<tr%s><th>%s</th><td>%s%s%s</td></tr>",
-                $html_class_attr,
-                $label,
-                $errors,
-                $bf->html(),
-                $help_text );
-
-        }
-        return join("\n",$out);
+        return $this->_html_output(
+            '<tr%1$s><th>%2$s</th><td>%5$s%3$s%4$s</td></tr>',    // normal_row
+            '<tr><td colspan="2">%s</td></tr>',    //error_row
+            '</td></tr>',  //row_ender
+            '<br />%s',   //help_text_html
+            FALSE); //errors_on_separate_row
     }
 
     public function as_ul() {
+        return $this->_html_output(
+            '<li%1$s>%5$s%2$s %3$s%4$s</li>',   //normal_row
+            '<li>%s</li>',  //error_row
+            '</li>',        // row_ender
+            ' %s',          //help_text_html
+            FALSE);
     }
 
     public function as_p() {
+        return $this->_html_output(
+            '<p%1$s>%2$s %3$s%4$s</p>',   // normal_row
+            '%s',  //error_row
+            '</p>',        // row_ender
+            ' %s',          //help_text_html
+            TRUE);
     }
 
     /*
@@ -135,8 +232,9 @@ class BaseForm
         are none.
     */
     public function non_field_errors() {
-        if(array_key_exists(NON_FIELD_ERRORS,$this->_errors)) {
-            return $this->_errors[NON_FIELD_ERRORS];
+        $errs = $this->errors;
+        if(array_key_exists(NON_FIELD_ERRORS,$errs)) {
+            return $errs[NON_FIELD_ERRORS];
         } else {
             return array();
         }
@@ -321,7 +419,8 @@ class BoundField
     public function html() {
         if( $this->field->show_hidden_initial )
             return $this->as_widget() + $this->as_hidden(TRUE);
-        return $this->as_widget();
+        $out = $this->as_widget();
+        return $out;
     }
 
 
@@ -435,20 +534,22 @@ class BoundField
 
 
 
-/*
-    def css_classes(self, extra_classes=None):
-        """
-        Returns a string of space-separated CSS classes for this field.
-        """
-        if hasattr(extra_classes, 'split'):
-            extra_classes = extra_classes.split()
-        extra_classes = set(extra_classes or [])
-        if self.errors and hasattr(self.form, 'error_css_class'):
-            extra_classes.add(self.form.error_css_class)
-        if self.field.required and hasattr(self.form, 'required_css_class'):
-            extra_classes.add(self.form.required_css_class)
-        return ' '.join(extra_classes)
- */
+    /* Returns a string of space-separated CSS classes for this field. */
+    function css_classes( $extra_classes=null) {
+        if($extra_classes) {
+            if(!is_array($extra_classes)) {
+                $extra_classes = explode(' ',$extra_classes);
+            }
+        } else {
+            $extra_classes = array();
+        }
+        // TODO: extra css classes from form:
+#        if self.errors and hasattr(self.form, 'error_css_class'):
+#            extra_classes.add(self.form.error_css_class)
+#        if self.field.required and hasattr(self.form, 'required_css_class'):
+#            extra_classes.add(self.form.required_css_class)
+        return join(' ',$extra_classes);
+    }
 
     /* Returns True if this BoundField's widget is hidden. */
     private function _is_hidden() {
