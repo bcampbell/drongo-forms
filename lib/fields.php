@@ -252,6 +252,30 @@ class IntegerField(Field):
 */
 
 
+
+class BooleanField extends Field {
+    static function default_widget() { return new CheckboxInput(); }
+
+    /* returns a boolean */
+    function to_php($value) {
+        $l = strtolower($value);
+
+        /* Explicitly check for the string 'False', which is what a hidden field
+         will submit for False. Also check for '0', since this is what
+          RadioSelect will provide.
+          . Because (bool)"true" == (bool)'1' == TRUE,
+         we don't need to handle that explicitly.
+         */
+        if($l==='false' or $l==='0')
+            $value=FALSE;
+        else
+            $value=(bool)$value;
+        return $value;
+    }
+}
+
+
+
 class ChoiceField extends Field {
     static function default_widget() { return new Select(); }
     static function default_error_messages() {
@@ -298,10 +322,5 @@ class ChoiceField extends Field {
 }
 
 
-class BooleanField extends Field {
-    static function default_widget() { return new CheckboxInput(); }
-
-    // TODO: implement proper to_php()
-}
 
 ?>

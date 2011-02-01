@@ -106,6 +106,13 @@ class TextInput extends Input
     public $input_type='text';
 }
 
+class PasswordInput extends Input
+{
+    public $input_type = 'password';
+    // TODO: support render_value flag in ctor and render()
+}
+
+
 class HiddenInput extends Input
 {
     public $input_type='hidden';
@@ -234,13 +241,19 @@ class CheckboxInput extends Widget {
     }
 
     function value_from_data($data, $files, $name) {
-        // TODO: be a bit more careful about this...
         if( !array_key_exists($name,$data)) {
             // A missing value means False because HTML form submission does not
             // send results for unselected checkboxes.
             return FALSE;
         }
-        $value = $data[$name] ? TRUE : FALSE;
+
+        // translate strings "true" and "false" into bool.
+        $value = $data[$name];
+        $l = strtolower($value);
+        if( $l==='true' )
+            return TRUE;
+        if( $l==='false' )
+            return FALSE;
         return $value;
     }
 

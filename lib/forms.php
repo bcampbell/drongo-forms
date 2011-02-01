@@ -10,7 +10,7 @@ define( 'NON_FIELD_ERRORS', '__all__' );
 //  port more fields/widgets
 //  port formsets
 //  documentation/examples
-
+//  support widget-specific options (eg render_value flag in PasswordInput)
 class BaseForm
 {
     public function __construct($data=null, $files=null, $opts ) {
