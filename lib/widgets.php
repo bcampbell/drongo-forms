@@ -208,4 +208,46 @@ class SelectMultiple extends Select {
  */
     }
 
+
+
+class CheckboxInput extends Widget {
+    function __construct($attrs=null) {
+        // TODO: support check_test param?
+        parent::__construct($attrs);
+    }
+
+    function render($name, $value, $attrs=null) {
+        if(is_null($attrs))
+            $attrs=array();
+        $attrs['type']='checkbox';
+        $attrs['name'] = $name;
+        $final_attrs = $this->build_attrs($attrs);
+        if($value)
+            $final_attrs['checked'] = 'checked';
+
+        if($value!=='' && $value!==TRUE && $value!==FALSE && $value!==null) {
+            // Only add the 'value' attribute if a value is non-empty.
+            $final_attrs['value'] = $value;
+        }
+
+        return sprintf('<input%s />',flatatt($final_attrs));
+    }
+
+    function value_from_data($data, $files, $name) {
+        // TODO: be a bit more careful about this...
+        if( !array_key_exists($name,$data)) {
+            // A missing value means False because HTML form submission does not
+            // send results for unselected checkboxes.
+            return FALSE;
+        }
+        $value = $data[$name] ? TRUE : FALSE;
+        return $value;
+    }
+
+    function _has_changed($initial, $data) {
+        // Sometimes data or initial could be None or u'' which should be the
+        // same thing as False.
+        return (bool)$initial != (bool)$data;
+    }
+}
 ?>

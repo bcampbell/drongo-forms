@@ -298,4 +298,10 @@ class ChoiceField extends Field {
 }
 
 
+class BooleanField extends Field {
+    static function default_widget() { return new CheckboxInput(); }
+
+    // TODO: implement proper to_php()
+}
+
 ?>
