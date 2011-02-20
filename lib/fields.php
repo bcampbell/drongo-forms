@@ -57,7 +57,7 @@ class MaxLengthValidator {
 
 abstract class Field
 {
-    public $required = FALSE;
+    public $required = TRUE;
     public $widget = null;
     public $label = null;
     public $initial = null;

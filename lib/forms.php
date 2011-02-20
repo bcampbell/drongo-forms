@@ -122,7 +122,7 @@ class BaseForm
                 }
                 $hidden_fields[] = $bf;
             } else {
-                # Create a 'class="..."' atribute if the row should have any
+                # Create a 'class="..."' attribute if the row should have any
                 # CSS classes applied.
                 $css_classes = $bf->css_classes();
                 if($css_classes)
@@ -154,8 +154,18 @@ class BaseForm
                     $help_text = vsprintf($help_text_html, array($field->help_text));
                 }
 
-                // TODO: this isn't right. Maybe we need an extra param for formatting error lists?
-                $errors = join("\n",$bf_errors);
+                // TODO: original django version has custom classes for
+                // collecting errors, which we should probably
+                // reimplement, rather than just using bare arrays....
+                // see forms.util for details
+                $errors = '';
+                if( $bf_errors ) {
+                    $errors = "<ul class=\"errorlist\">\n";
+                    foreach( $bf_errors as $err ) {
+                        $errors .= "<li>$err</li>\n";
+                    }
+                    $errors .= "</ul>\n";
+                }
 
                 $params = array( $html_class_attr,
                     $label,
@@ -166,9 +176,7 @@ class BaseForm
             }
         }
         if($top_errors) {
-            foreach($top_errors as $e) {
-                array_unshift(sprintf($error_row, $e));
-            }
+            array_unshift( $output, sprintf($error_row, fmt_errorlist($top_errors)) );
         }
 
         // Insert any hidden fields in the last row.
@@ -198,13 +206,28 @@ class BaseForm
         return join("\n",$output);
     }
 
+    // TODO: original django version has custom classes for
+    // collecting errors, which know how to render themselves.
+    // should probably reimplement, rather than just using
+    // bare arrays....
+    // see forms.util for details
+    function fmt_errorlist($errs) {
+        if(!$errs)
+            return '';
+        $out = "<ul class=\"errorlist\">\n";
+        foreach( $errs as $err ) {
+            $our .= "<li>$err</li>\n";
+        }
+        $out .= "</ul>\n";
+        return $out;
+    }
 
     public function as_table() {
         return $this->_html_output(
             '<tr%1$s><th>%2$s</th><td>%5$s%3$s%4$s</td></tr>',    // normal_row
             '<tr><td colspan="2">%s</td></tr>',    //error_row
             '</td></tr>',  //row_ender
-            '<br />%s',   //help_text_html
+            '<br /><span class="helptext">%s</span>',   //help_text_html
             FALSE); //errors_on_separate_row
     }
 
@@ -213,7 +236,7 @@ class BaseForm
             '<li%1$s>%5$s%2$s %3$s%4$s</li>',   //normal_row
             '<li>%s</li>',  //error_row
             '</li>',        // row_ender
-            ' %s',          //help_text_html
+            ' <span class="helptext">%s</span>',          //help_text_html
             FALSE);
     }
 
@@ -222,7 +245,7 @@ class BaseForm
             '<p%1$s>%2$s %3$s%4$s</p>',   // normal_row
             '%s',  //error_row
             '</p>',        // row_ender
-            ' %s',          //help_text_html
+            ' <span class="helptext">%s</span>',          //help_text_html
             TRUE);
     }
 
@@ -543,11 +566,11 @@ class BoundField
         } else {
             $extra_classes = array();
         }
-        // TODO: extra css classes from form:
-#        if self.errors and hasattr(self.form, 'error_css_class'):
-#            extra_classes.add(self.form.error_css_class)
-#        if self.field.required and hasattr(self.form, 'required_css_class'):
-#            extra_classes.add(self.form.required_css_class)
+
+        if($this->errors && isset($this->form->error_css_class))
+            $extra_classes[] = $this->form->error_css_class;
+        if($this->field->required && isset($this->form->required_css_class))
+            $extra_classes[] = $this->form->required_css_class;
         return join(' ',$extra_classes);
     }
 
