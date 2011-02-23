@@ -5,8 +5,6 @@ require_once 'widgets.php';
 define( 'NON_FIELD_ERRORS', '__all__' );
 
 // TODO:
-//  sort out error message rendering
-//  support media (css,js)
 //  port more fields/widgets
 //  port formsets
 //  documentation/examples
@@ -49,7 +47,8 @@ class BaseForm
             return $this->_get_errors();
         if( $v=='changed_data' )
             return $this->_get_changed_data();
-        //TODO media
+        if( $v=='media' )
+            return $this->_get_media();
 
         // TODO: should trigger an error here?
         return null;
@@ -389,8 +388,23 @@ class BaseForm
             return $this->_changed_data;
         }
     }
+
+
+    // return media required by the form and all it's widgets
+    function _get_media()
+    {
+        $m = new Media();
+        if(isset($this->form_media)) {
+            $m->extend( $this->form_media );
+        }
+
+        foreach($this->fields as $name=>$field) {
+            $m->extend($field->widget->media);
+        }
+        return $m;
+    }
+
     // TODO:
-    // media / _get_media()
     // is_multipart()
     //  hidden_fields()
     //  visible_fields()

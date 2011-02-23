@@ -1,5 +1,71 @@
 <?php
 
+
+
+/* helper class to specify (and collect and render) js and css */
+class Media
+{
+    private $js=array();
+    private $css=array();
+    function __construct($data=null)
+    {
+        if(is_array($data)) {
+            if(array_key_exists('js',$data))
+                $this->js = $data['js'];
+            if(array_key_exists('css',$data))
+                $this->css = $data['css'];
+        }
+    }
+
+    // add another media object to this one
+    function extend($other)
+    {
+        $this->js = array_unique(array_merge($other->js, $this->js));
+        foreach($other->css as $medium=>$v) {
+            if(array_key_exists($medium,$this->css)) {
+                $this->css[$medium] = array_unique(array_merge($v,$this->css[$medium]));
+            } else {
+                $this->css[$medium] = $v;
+            }
+        }
+    }
+
+    // return a string suitable for including in a <head> section of a page
+    function render()
+    {
+        $out = implode("\n", array_merge($this->render_css(),$this->render_js()));
+        if($out)
+            $out .= "\n";
+        return $out;
+    }
+
+    // return a list of <script> strings
+    function render_js()
+    {
+        $out = array();
+        foreach($this->js as $path) {
+            $out[] = sprintf('<script type="text/javascript" src="%s"></script>', $path );
+        }
+        return $out;
+    }
+
+    // return a list of <link> strings
+    function render_css()
+    {
+        $out = array();
+        $mediums = array_keys($this->css);
+        foreach($mediums as $medium) {
+            foreach($this->css[$medium] as $path) {
+                $out[] = sprintf('<link href="%s" type="text/css" media="%s" rel="stylesheet" />',$path,$medium);
+            }
+        }
+        return $out;
+    }
+}
+
+
+
+
     /*
     Convert a array of attributes to a single string.
     The returned string will contain a leading space followed by key="value",
@@ -25,10 +91,15 @@ abstract class Widget
     public $needs_multipart_form = FALSE; // Determines does this widget need multipart-encrypted form
 
     public $attrs = array();
+    public $media = null;
 
     function __construct($attrs=null) {
         if(!is_null($attrs))
             $this->attrs = $attrs;
+        // should always have a valid media object, even if it's empty
+        if(is_null($this->media)) {
+            $this->media = new Media();
+        }
     }
 
     /*
