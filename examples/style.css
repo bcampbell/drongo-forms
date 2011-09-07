@@ -1,0 +1,15 @@
+/* crummy css to demo stuff you can style */
+
+form table
+{
+    padding: 1em;
+    border-collapse: collapse;
+    border: 1px solid #444;
+}
+form tr { border-bottom: 1px solid #444; }
+form th { font-weight: normal; vertical-align: top; }
+form td { padding: 0.5em; }
+
+form .helptext { color: #444; font-size: smaller; }
+form .errorlist { color: red; border: 1px solid red; }
+

@@ -24,7 +24,7 @@ class TestForm extends Form {
         $this->fields['password'] = new CharField( array('widget'=>'PasswordInput') );
         $this->fields['picker'] = new ChoiceField( array('choices'=>$choices) );
         $this->fields['desc'] = new CharField( array('choices'=>$choices,'widget'=>'TextArea') );
-        $this->fields['shity'] = new BooleanField( array() );
+        $this->fields['magic'] = new BooleanField( array() );
         $this->fields['multipicker'] = new MultipleChoiceField( array('choices'=>$choices) );
         $this->fields['multipicker2'] = new MultipleChoiceField( array('choices'=>$choices, 'widget'=>'CheckboxSelectMultiple'));
     }
@@ -46,27 +46,23 @@ function page( $f ) {
 ?>
 <html>
 <head>
+<link rel="stylesheet" type="text/css" href="style.css" />
 </head>
 <body>
-<pre><code>
-POST:
-<?php var_dump($_POST) ?>
-
-
-<code></pre>
-<?php if( $f->is_bound ) { ?>bound<?php }else{ ?>unbound<?php } ?><br/>
-
-<?php if($f->is_valid()) { ?>Form is Valid!<?php } else { ?>Form not valid<?php } ?>
-
-
+<h1>drongo-forms test</h1>
+<p>A random selection of stuff!</p>
 <form action="" method="POST">
 <table>
 <?= $f->as_table(); ?>
 </table>
 <input type="submit" />
 </form>
+Form is <?php if( $f->is_bound ) { ?>bound<?php }else{ ?>unbound<?php } ?>.<br/>
+
+Form is <?php if($f->is_valid()) { ?>valid<?php } else { ?>not valid<?php } ?><br/>
+<br/>
 <?php if($f->is_valid()) { $f->full_clean(); ?>
-cleaned data:
+Cleaned data:
 <ul>
 <?php foreach( $f->cleaned_data as $name=>$value ) { ?>
 <li><?=$name ?>: <? var_dump( $value ); ?></li>

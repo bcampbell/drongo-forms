@@ -2,6 +2,10 @@
 
 require_once 'widgets.php';
 
+// TODO:
+// BUG: derived class default_error_messages() not being called?
+
+
 
 // holds either a list of error messages as strings,
 // or a single error, with identifying code and params
@@ -314,13 +318,68 @@ class ChoiceField extends Field {
         parent::validate($value);
         if(!$value)
             return; # blank is ok
-        if(!array_key_exists($value,$this->choices)) {
+        if(!$this->valid_value($value)) {
             $msg = sprintf( $this->error_messages['invalid_choice'], $value);
             throw new ValidationError($msg);
         }
     }
+
+    // Check to see if the provided value is a valid choice
+    function valid_value($value) {
+        foreach($this->choices as $k=>$v) {
+            if(is_array($v)) {
+                // This is an optgroup, so look inside the group for options
+                foreach($v as $k2=>$v2) {
+                    if($value == $k2) {
+                        return TRUE;
+                    }
+                }
+            } else {
+                if($value==$k) {
+                    return TRUE;
+                }
+            }
+        }
+        return FALSE;
+    }
+
 }
 
 
+class MultipleChoiceField extends ChoiceField {
+    // TODO: implement hidden_widget?
+    static function default_widget() { return new SelectMultiple(); }
+    static function default_error_messages() {
+        return array_merge( parent::default_error_messages(), array(
+            'invalid_choice'=>'Select a valid choice. %1$s is not one of the available choices.',
+            'invalid_list'=>'Enter a list of values.'
+        ));
+    }
+
+    function to_php($value)
+    {
+        if(!$value) {
+            return array();
+        }
+        if(!is_array($value)) {
+            throw new ValidationError($this->error_messages['invalid_list']);
+        }
+        return $value;
+    }
+
+    function validate($value)
+    {
+        if($this->required and !$value)
+            throw new ValidationError($this->error_messages['required']);
+        // Validate that each value in the value list is a valid choice.
+        foreach($value as $val) {
+            if(!$this->valid_value($val)){
+                $msg = sprintf( $this->error_messages['invalid_choice'], $val);
+                throw new ValidationError($msg);
+            }
+        }
+    }
+
+}
 
 ?>

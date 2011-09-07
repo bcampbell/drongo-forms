@@ -119,7 +119,7 @@ abstract class Widget
     Given an array of data and this widget's name, returns the value
     of this widget. Returns null if it's not provided.
     (named value_from_datadict() in original python)
-    */
+     */
     function value_from_data($data, $files, $name) {
         if( array_key_exists($name,$data) )
             return $data[$name];
@@ -172,6 +172,8 @@ class Input extends Widget
     }
 }
 
+
+
 class TextInput extends Input
 {
     public $input_type='text';
@@ -191,6 +193,10 @@ class HiddenInput extends Input
 }
 
 
+// TODO:
+// MultipleHiddenInput
+// FileInput
+
 class Textarea extends Widget {
     function __construct($attrs=null) {
         /* The 'rows' and 'cols' attributes are required for HTML correctness. */
@@ -207,6 +213,69 @@ class Textarea extends Widget {
         $attrs['name']=$name;
         $final_attrs = $this->build_attrs($attrs);
         return sprintf( "<textarea%s>%s</textarea>", flatatt($final_attrs),htmlspecialchars($value));
+    }
+}
+
+// TODO:
+// DateInput
+// DateTimeInput
+// TimeInput
+
+
+
+class CheckboxInput extends Widget {
+    function __construct($attrs=null, $check_test=null) {
+        parent::__construct($attrs);
+        // check_test is a callable that takes a value and returns True
+        // if the checkbox should be checked for that value.
+        $this->check_test = $check_test;
+    }
+
+    function render($name, $value, $attrs=null) {
+        if(is_null($attrs))
+            $attrs=array();
+        $attrs['type']='checkbox';
+        $attrs['name'] = $name;
+        $final_attrs = $this->build_attrs($attrs);
+        $result = FALSE;
+        if(is_callable($this->check_test)) {
+            $result = call_user_func($this->check_test,$value);
+        } else {
+            $result = $value ? TRUE:FALSE;
+        }
+        if($result) {
+            $final_attrs['checked'] = 'checked';
+        }
+
+        if($value!=='' && $value!==TRUE && $value!==FALSE && $value!==null) {
+            // Only add the 'value' attribute if a value is non-empty.
+            $final_attrs['value'] = $value;
+        }
+
+        return sprintf('<input%s />',flatatt($final_attrs));
+    }
+
+    function value_from_data($data, $files, $name) {
+        if( !array_key_exists($name,$data)) {
+            // A missing value means False because HTML form submission does not
+            // send results for unselected checkboxes.
+            return FALSE;
+        }
+
+        // translate strings "true" and "false" into bool.
+        $value = $data[$name];
+        $l = strtolower($value);
+        if( $l==='true' )
+            return TRUE;
+        if( $l==='false' )
+            return FALSE;
+        return $value;
+    }
+
+    function _has_changed($initial, $data) {
+        // Sometimes data or initial could be None or u'' which should be the
+        // same thing as False.
+        return (bool)$initial != (bool)$data;
     }
 }
 
@@ -263,12 +332,14 @@ class Select extends Widget {
 }
 
 
-// TODO
+// TODO:
+// NullBooleanSelect
+
 class SelectMultiple extends Select {
     function render($name, $value, $attrs=null, $choices=array()) {
         if(is_null($value))
-            $value='';
-        $attrs['name']=$name;
+            $value=array();
+        $attrs['name']=$name . '[]';
         $final_attrs = $this->build_attrs($attrs);
 
         $output=array();
@@ -278,60 +349,74 @@ class SelectMultiple extends Select {
 
         return join("\n",$output );
     }
-/*
-    def value_from_datadict(self, data, files, name):
-        if isinstance(data, (MultiValueDict, MergeDict)):
-            return data.getlist(name)
-        return data.get(name, None)
- */
-    }
-
-
-
-class CheckboxInput extends Widget {
-    function __construct($attrs=null) {
-        // TODO: support check_test param?
-        parent::__construct($attrs);
-    }
-
-    function render($name, $value, $attrs=null) {
-        if(is_null($attrs))
-            $attrs=array();
-        $attrs['type']='checkbox';
-        $attrs['name'] = $name;
-        $final_attrs = $this->build_attrs($attrs);
-        if($value)
-            $final_attrs['checked'] = 'checked';
-
-        if($value!=='' && $value!==TRUE && $value!==FALSE && $value!==null) {
-            // Only add the 'value' attribute if a value is non-empty.
-            $final_attrs['value'] = $value;
-        }
-
-        return sprintf('<input%s />',flatatt($final_attrs));
-    }
-
-    function value_from_data($data, $files, $name) {
-        if( !array_key_exists($name,$data)) {
-            // A missing value means False because HTML form submission does not
-            // send results for unselected checkboxes.
-            return FALSE;
-        }
-
-        // translate strings "true" and "false" into bool.
-        $value = $data[$name];
-        $l = strtolower($value);
-        if( $l==='true' )
-            return TRUE;
-        if( $l==='false' )
-            return FALSE;
-        return $value;
-    }
 
     function _has_changed($initial, $data) {
-        // Sometimes data or initial could be None or u'' which should be the
-        // same thing as False.
-        return (bool)$initial != (bool)$data;
+        if(is_null($initial))
+            $initial = array();
+        if(is_null($data))
+            $data = array();
+        if(sizeof(array_diff($initial, $data)) > 0)
+            return TRUE;
+        return FALSE;
+    }
+
+}
+
+// TODO:
+// RadioSelect
+
+
+// cheesy helper class to work around php lack of closures/lambdas
+class TestInArray
+{
+    function __construct($haystack) { $this->haystack=$haystack; }
+    function test($needle) { return in_array($needle,$this->haystack); }
+}
+
+
+class CheckboxSelectMultiple extends SelectMultiple {
+    function render($name, $value, $attrs=null, $choices=array()) {
+        if(is_null($value))
+            $value=array();
+        $has_id = ($attrs && array_key_exists('id',$attrs)) ? TRUE:FALSE;
+        $attrs['name']=$name . '[]';
+        $final_attrs = $this->build_attrs($attrs);
+
+        $output=array('<ul>');
+
+        // TODO: extra choices not yet supported because of annoying php
+        // array issues with numeric indexes. grrr.
+        assert(!$choices);
+
+        $i=0;
+        foreach($this->choices as $option_value=>$option_label) {
+            // If an ID attribute was given, add a numeric index as a suffix,
+            // so that the checkboxes don't all have the same ID attribute.
+            if($has_id) {
+                $final_attrs['id'] = sprintf('%s_%s', $attrs['id'], $i);
+                $label_for = sprintf(' for="%s"', $final_attrs['id']);
+            } else {
+                $label_for = '';
+            }
+            ++$i;
+
+            $check_test = array(new TestInArray($value),"test");
+            $cb = new CheckboxInput($final_attrs,$check_test);
+            $output[] = sprintf("<li><label%s>%s %s</label></li>",
+                $label_for,
+                $cb->render($attrs['name'],$option_value),
+                $option_label );
+        }
+        $output[] = '</ul>';
+        return join("\n",$output );
     }
 }
+
+
+
+// TODO:
+// MultiWidget
+// SplitDateTimeWidget
+// SplitHiddenDateTimeWidget
+
 ?>
