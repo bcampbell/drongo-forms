@@ -102,7 +102,7 @@ abstract class Field
             if(!array_key_exists($optname,$opts) )
                 continue;
             if(is_array($opts[$optname])) {
-                $this->$optname = array_merge($this->optname,$opts[$optname]);
+                $this->$optname = array_merge($this->$optname,$opts[$optname]);
             } else {
                 $this->$optname = $opts[$optname];
             }
