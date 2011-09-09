@@ -14,6 +14,7 @@ class TestForm extends Form {
             '1'=>'One',
             '2'=>'Two',);
         parent::__construct($data,$files,$opts);
+        $this->fields['when'] = new DateField(array('help_text'=>'Enter a date'));
         $this->fields['username'] = new CharField(
             array( 'required'=>TRUE,
                 'min_length'=>6,

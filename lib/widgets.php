@@ -194,8 +194,50 @@ class HiddenInput extends Input
 }
 
 
+
+// A widget that handles <input type="hidden"> for fields that have a list
+// of values.
+class MultipleHiddenInput extends HiddenInput
+{
+    function __construct($attrs=null, $choices=array()) {
+        parent::__construct($attrs);
+        $this->choices = $choices;
+    }
+
+    function render($name, $value, $attrs=null, $choices=array()) {
+        if(is_null($value))
+            $value = array();
+        $attrs = is_null($attrs) ? array() : $attrs;
+        $attrs['type'] = $this->input_type;
+        $attrs['name'] = $name . "[]";
+        $final_attrs = $this->build_attrs($attrs);
+        $id_ = array_key_exists('id', $final_attrs) ? $final_attrs['id'] : null;
+        $inputs = array();
+        $i=0;
+        foreach($value as $v) {
+            $input_attrs = $final_attrs;
+            $input_attrs['value'] = $v;
+            if($id_) {
+                // An ID attribute was given. Add a numeric index as a suffix
+                // so that the inputs don't all have the same ID attribute.
+                $input_attrs['id'] = sprintf('%s_%s', $id_, $i);
+            }
+            $inputs[]= sprintf('<input%s />',flatatt($input_attrs));
+            ++$i;
+        }
+        return join("\n",$inputs);
+    }
+
+    function value_from_data($data, $files, $name) {
+        if( array_key_exists($name, $data) )
+            return $data[$name];
+        return null;
+    }
+}
+
+
+
 // TODO:
-// MultipleHiddenInput
 // FileInput
 
 class Textarea extends Widget {

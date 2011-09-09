@@ -256,6 +256,61 @@ class IntegerField(Field):
 */
 
 
+// TODO:
+// FloatField
+// DecimalField
+
+
+class DateField extends Field {
+    //static function default_widget() { return new DateInput(); }
+    static function default_widget() { return new TextInput(); }
+    public static function default_error_messages() {
+        return array_merge(parent::default_error_messages(),
+            array('invalid' => 'Enter a valid date.',));
+    }
+
+    public function __construct($opts) {
+        parent::__construct($opts);
+        $this->input_formats = array_key_exists('input_formats',$opts) ? $opts['input_formats'] : null;
+        assert(is_null($this->input_formats));  // TODO: support custom input formats (might need php5.3+)?
+    }
+
+    /* returns a DateTime object */
+    function to_php($value) {
+        if(!$value)
+            return null;
+        if($value instanceof DateTime)
+            return $value;
+        if(is_array($value)) {
+            // Input comes from a SplitDateTimeWidget, for example. So, it's two
+            // components: date and time.
+            assert(FALSE);  // TODO: implement
+            return null;
+        }
+
+        // TODO: parse custom input formats here...
+        try {
+            return new DateTime($value);
+        } catch (Exception $e) {
+        }
+
+        throw new ValidationError($this->error_messages['invalid']);
+    }
+}
+
+
+
+
+
+// TODO:
+// TimeField
+// DateTimeField
+// RegexField
+// EmailField
+// FileField
+// ImageField
+// URLField
+
 
 class BooleanField extends Field {
     static function default_widget() { return new CheckboxInput(); }
@@ -278,6 +333,9 @@ class BooleanField extends Field {
     }
 }
 
+
+// TODO:
+// NullBooleanField
 
 
 class ChoiceField extends Field {
@@ -345,9 +403,13 @@ class ChoiceField extends Field {
 
 }
 
+// TODO:
+// TypedChoiceField
+
+
 
 class MultipleChoiceField extends ChoiceField {
-    // TODO: implement hidden_widget?
+    static function default_hidden_widget() { return new MultipleHiddenInput(); }
     static function default_widget() { return new SelectMultiple(); }
     static function default_error_messages() {
         return array_merge( parent::default_error_messages(), array(
@@ -381,5 +443,15 @@ class MultipleChoiceField extends ChoiceField {
     }
 
 }
+
+
+// TODO:
+// ComboField
+// MultiValueField
+// FilePathField
+// SplitDateTimeField
+// IPAddressField
+// SlugField
+
 
 ?>
