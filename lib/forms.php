@@ -79,7 +79,7 @@ class BaseForm
     Subclasses may wish to override.
     */
     public function add_prefix($field_name) {
-        if($this->prefix) {
+        if(!is_null($this->prefix)) {
             return sprintf('%s-%s', $this->prefix, $field_name);
         } else {
             return $field_name;
@@ -121,8 +121,8 @@ class BaseForm
                 }
                 $hidden_fields[] = $bf;
             } else {
-                # Create a 'class="..."' attribute if the row should have any
-                # CSS classes applied.
+                // Create a 'class="..."' attribute if the row should have any
+                // CSS classes applied.
                 $css_classes = $bf->css_classes();
                 if($css_classes)
                     $html_class_attr = sprintf(' class="%s"', $css_classes);
@@ -175,12 +175,15 @@ class BaseForm
             }
         }
         if($top_errors) {
-            array_unshift( $output, sprintf($error_row, fmt_errorlist($top_errors)) );
+            array_unshift( $output, sprintf($error_row, $this->fmt_errorlist($top_errors)) );
         }
 
         // Insert any hidden fields in the last row.
         if($hidden_fields) {
-            $str_hidden = join('',$hidden_fields);
+            $str_hidden = '';
+            foreach($hidden_fields as $hf) {
+                $str_hidden .= $hf->html();
+            }
             if($output) {
                 $last_row = array_pop($output);
                 // Chop off the trailing row_ender (e.g. '</td></tr>') and
@@ -215,7 +218,7 @@ class BaseForm
             return '';
         $out = "<ul class=\"errorlist\">\n";
         foreach( $errs as $err ) {
-            $our .= "<li>$err</li>\n";
+            $out .= "<li>$err</li>\n";
         }
         $out .= "</ul>\n";
         return $out;
@@ -269,7 +272,7 @@ class BaseForm
     protected function _raw_value($fieldname) {
         $field = $this->fields[$fieldname];
         $prefix = $this->add_prefix($fieldname);
-        return $field->widget->value_from_datadict( $this->data, $this->files, $prefix);
+        return $field->widget->value_from_data( $this->data, $this->files, $prefix);
     }
 
     /*Cleans all of self.data and populates self._errors and
@@ -377,10 +380,11 @@ class BaseForm
                     }
                 } else {
                     $initial_prefixed_name = $this->add_initial_prefix($name);
-                    $hidden_widget = $field->hidden_widget();
+                    $hidden_widget = $field->default_hidden_widget();
                     $initial_value = $hidden_widget->value_from_data(
                         $this->data, $this->files, $initial_prefixed_name);
                 }
+
                 if($field->widget->_has_changed($initial_value, $data_value)) {
                     $this->_changed_data[] = $name;
                 }
@@ -472,8 +476,8 @@ class BoundField
         field's default widget will be used.
  */
     public function as_widget($widget=null, $attrs=null, $only_initial=FALSE) {
-        // TODO: create default widget if widget==null...
-        $widget = $this->field->widget;
+        if(!$widget)
+            $widget = $this->field->widget;
         if( is_null($attrs) )
             $attrs = array();
 
@@ -536,9 +540,8 @@ class BoundField
 */
 
 
-    public function as_hidden( $attrs=null ) {
-        // TODO
-        throw Exception( "Not implemented" );
+    public function as_hidden($attrs = null) {
+        return $this->as_widget($this->field->default_hidden_widget(), $attrs);
     }
 
     // Returns the data for this BoundField, or None if it wasn't given.

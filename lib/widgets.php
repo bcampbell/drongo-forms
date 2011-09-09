@@ -161,6 +161,7 @@ class Input extends Widget
     function render($name,$value,$attrs=null) {
         if(is_null($value))
             $value='';
+        $attrs = is_null($attrs) ? array() : $attrs;
         $attrs['type'] = $this->input_type;
         $attrs['name'] = $name;
         // Only add the 'value' attribute if a value is non-empty.
@@ -210,6 +211,7 @@ class Textarea extends Widget {
     function render($name, $value, $attrs=null) {
         if(is_null($value))
             $value='';
+        $attrs = is_null($attrs) ? array() : $attrs;
         $attrs['name']=$name;
         $final_attrs = $this->build_attrs($attrs);
         return sprintf( "<textarea%s>%s</textarea>", flatatt($final_attrs),htmlspecialchars($value));
@@ -234,6 +236,7 @@ class CheckboxInput extends Widget {
     function render($name, $value, $attrs=null) {
         if(is_null($attrs))
             $attrs=array();
+        $attrs = is_null($attrs) ? array() : $attrs;
         $attrs['type']='checkbox';
         $attrs['name'] = $name;
         $final_attrs = $this->build_attrs($attrs);
@@ -291,6 +294,7 @@ class Select extends Widget {
     function render($name, $value, $attrs=null, $choices=array()) {
         if(is_null($value))
             $value='';
+        $attrs = is_null($attrs) ? array() : $attrs;
         $attrs['name']=$name;
         $final_attrs = $this->build_attrs($attrs);
 
@@ -339,6 +343,7 @@ class SelectMultiple extends Select {
     function render($name, $value, $attrs=null, $choices=array()) {
         if(is_null($value))
             $value=array();
+        $attrs = is_null($attrs) ? array() : $attrs;
         $attrs['name']=$name . '[]';
         $final_attrs = $this->build_attrs($attrs);
 
@@ -378,6 +383,7 @@ class CheckboxSelectMultiple extends SelectMultiple {
     function render($name, $value, $attrs=null, $choices=array()) {
         if(is_null($value))
             $value=array();
+        $attrs = is_null($attrs) ? array() : $attrs;
         $has_id = ($attrs && array_key_exists('id',$attrs)) ? TRUE:FALSE;
         $attrs['name']=$name . '[]';
         $final_attrs = $this->build_attrs($attrs);
