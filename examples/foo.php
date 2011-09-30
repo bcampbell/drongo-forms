@@ -5,7 +5,7 @@ require_once "../lib/forms.php";
 
 
 class TestForm extends Form {
-    function __construct($data,$files,$opts) {
+    function __construct($data=null,$files=null,$opts=null) {
         $choices = array(
             'r'=>'Red',
             'g'=>'Green',
@@ -14,14 +14,14 @@ class TestForm extends Form {
             '1'=>'One',
             '2'=>'Two',);
         parent::__construct($data,$files,$opts);
+        $this->fields['url'] = new URLField(array('help_text'=>'Enter a URL'));
+        $this->fields['email'] = new EmailField(array('help_text'=>'Enter an Email address'));
         $this->fields['when'] = new DateField(array('help_text'=>'Enter a date'));
         $this->fields['username'] = new CharField(
             array( 'required'=>TRUE,
                 'min_length'=>6,
                 'max_length'=>15,
                 'help_text'=>'e.g. Fred Bloggs'));
-        $this->fields['email'] = new CharField( array('max_length'=>100,
-            'label'=>"Electronic Mail") );
         $this->fields['password'] = new CharField( array('widget'=>'PasswordInput') );
         $this->fields['picker'] = new ChoiceField( array('choices'=>$choices) );
         $this->fields['desc'] = new CharField( array('choices'=>$choices,'widget'=>'TextArea') );
@@ -42,17 +42,34 @@ class TestForm extends Form {
 }
 
 
-
-$f = new TestForm( $_POST, array(),
-    array(
+function view()
+{
+    $form_opts = array(
         'initial'=>array('username'=>'admin','password'=>'password'),
         /* 'prefix'=>'test', */
-    ) );
+    );
 
-page($f);
+    if($_SERVER['REQUEST_METHOD'] == 'POST') {
+        $f= new TestForm($_POST,array(),$form_opts);
+        if($f->is_valid()) {
+            // process form here...
+            // then, redirect somewhere to prevent doubleposting
+//            header("HTTP/1.1 303 See Other");
+//            header("Location: {$url}");
+//          return;
+
+        }
+    } else {
+        // provide an unbound form
+        $f = new TestForm(null,null,$form_opts);
+    }
+
+    template($f);
+}
 
 
-function page( $f ) {
+
+function template( $f ) {
 
 ?>
 <html>
@@ -61,6 +78,18 @@ function page( $f ) {
 </head>
 <body>
 <h1>drongo-forms test</h1>
+
+<?php if($f->is_valid()) { ?>
+
+Cleaned data:
+<ul>
+<?php foreach( $f->cleaned_data as $name=>$value ) { ?>
+<li><?=$name ?>: <? var_dump( $value ); ?></li>
+<?php } ?>
+</ul>
+
+<?php } else { ?>
+
 <p>A random selection of stuff!</p>
 <form action="" method="POST">
 <table>
@@ -68,21 +97,15 @@ function page( $f ) {
 </table>
 <input type="submit" />
 </form>
-Form is <?php if( $f->is_bound ) { ?>bound<?php }else{ ?>unbound<?php } ?>.<br/>
-
-Form is <?php if($f->is_valid()) { ?>valid<?php } else { ?>not valid<?php } ?><br/>
 <br/>
-<?php if($f->is_valid()) { $f->full_clean(); ?>
-Cleaned data:
-<ul>
-<?php foreach( $f->cleaned_data as $name=>$value ) { ?>
-<li><?=$name ?>: <? var_dump( $value ); ?></li>
+
 <?php } ?>
-</ul>
-<?php } ?>
+
 </body>
 </html>
 <?php
 }
 
+view();
 
+?>

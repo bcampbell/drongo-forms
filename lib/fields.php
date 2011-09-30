@@ -264,12 +264,62 @@ class DateField extends Field {
 // TODO:
 // TimeField
 // DateTimeField
-// RegexField
-// EmailField
 // FileField
 // ImageField
-// URLField
 
+class RegexField extends CharField {
+
+    public function __construct($regex,$opts) {
+        parent::__construct($opts);
+        $this->validators[] = array(new RegexValidator($regex),'execute');
+    }
+}
+
+class EmailField extends CharField {
+    public static function default_error_messages() {
+        return array_merge( parent::default_error_messages(),
+            array( 'invalid'=>'Enter a valid e-mail address.',));
+    }
+
+    public function __construct($opts) {
+        parent::__construct($opts);
+        $this->validators[] = array(new EmailValidator(),"execute");
+    }
+}
+
+
+
+class URLField extends CharField {
+    // TODO: verify_exists not supported
+    public static function default_error_messages() {
+        return array_merge( parent::default_error_messages(),
+            array( 'invalid'=>'Enter a valid URL.',));
+        //'invalid_link': _(u'This URL appears to be a broken link.'),
+    }
+
+    public function __construct($opts) {
+        parent::__construct($opts);
+        $this->validators[] = array(new URLValidator(),"execute");
+    }
+
+    public function to_php($value) {
+        if($value) {
+            if(strpos('://',$value) !== FALSE ) {
+                /* If no URL scheme given, assume http:// */
+                $value = 'http://' . $value;
+            }
+            // TODO: other url fixups:
+/*
+            url_fields = list(urlparse.urlsplit(value))
+            if not url_fields[2]:
+                # the path portion may need to be added before query params
+                url_fields[2] = '/'
+                value = urlparse.urlunsplit(url_fields)
+*/
+        }
+        return parent::to_php($value);
+    }
+}
 
 class BooleanField extends Field {
     static function default_widget() { return new CheckboxInput(); }
