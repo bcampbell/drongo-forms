@@ -28,6 +28,16 @@ class TestForm extends Form {
         $this->fields['magic'] = new BooleanField( array() );
         $this->fields['multipicker'] = new MultipleChoiceField( array('choices'=>$choices) );
         $this->fields['multipicker2'] = new MultipleChoiceField( array('choices'=>$choices, 'widget'=>'CheckboxSelectMultiple'));
+        $this->fields['int_number'] = new IntegerField(
+            array( 'required'=>FALSE,
+                'min_value'=>1,
+                'max_value'=>10,
+                'help_text'=>'Pick a number between 1 and 10'));
+        $this->fields['float_number'] = new FloatField(
+            array( 'required'=>FALSE,
+                'min_value'=>0,
+                'max_value'=>1,
+                'help_text'=>'Pick a number between 0 and 1'));
     }
 }
 

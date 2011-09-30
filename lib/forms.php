@@ -4,11 +4,19 @@ require_once 'widgets.php';
 
 define( 'NON_FIELD_ERRORS', '__all__' );
 
+
+//
+class DrongoDateTime extends DateTime { function __toString() { return $this->format('Y-m-d H:i:s'); } } 
+class DrongoDate extends DateTime { function __toString() { return $this->format('Y-m-d'); } }
+class DrongoTime extends DateTime { function __toString() { return $this->format('H:i:s'); } }
+
+
 // TODO:
 //  port more fields/widgets
 //  port formsets
 //  documentation/examples
 //  support widget-specific options (eg render_value flag in PasswordInput)
+//  add __toString() support to things where it makes sense...
 class BaseForm
 {
     public function __construct($data=null, $files=null, $opts ) {

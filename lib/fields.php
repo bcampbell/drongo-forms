@@ -1,62 +1,11 @@
 <?php
 
 require_once 'widgets.php';
+require_once 'validators.php';
 
 // TODO:
 // BUG: derived class default_error_messages() not being called?
 
-
-
-// holds either a list of error messages as strings,
-// or a single error, with identifying code and params
-class ValidationError extends Exception {
-    public $messages = array();
-    public $code=null;      // which error it is
-    public $params=null;    // params for that error
-    function __construct( $msg, $code=null, $params=null ) {
-        if(is_array($msg))
-            // a bunch of error strings
-            $this->messages = $msg;
-        else {
-            // a single message, with enough info for somewhere
-            // higher up to customise it
-            $this->messages = array($msg);
-            $this->code=$code;
-            $this->params=$params;
-        }
-    }
-}
-
-
-
-
-class MinLengthValidator {
-
-    public $msg = 'Ensure this value has at least %1$d characters (it has %2$d).';
-    public $code = 'min_length';
-    function __construct($limit) { $this->limit = $limit; }
-    function execute($value) {
-        $len=strlen($value);
-        if($len < $this->limit) {
-            $params = array($this->limit, $len);
-            throw new ValidationError(vsprintf($this->msg,$params), $this->code, $params );
-        }
-    }
-}
-
-class MaxLengthValidator {
-
-    public $msg = 'Ensure this value has at most %1$d characters (it has %2$d).';
-    public $code = 'max_length';
-    function __construct($limit) { $this->limit = $limit; }
-    function execute($value) {
-        $len=strlen($value);
-        if($len > $this->limit) {
-            $params = array($this->limit, $len);
-            throw new ValidationError(vsprintf($this->msg,$params), $this->code, $params );
-        }
-    }
-}
 
 
 abstract class Field
@@ -211,53 +160,63 @@ class CharField extends Field
 
 
 class IntegerField extends Field {
+    public $max_value = null;
+    public $min_value = null;
+
     public static function default_error_messages() {
         return array_merge( parent::default_error_messages(),
             array(
                 'invalid'=>'Enter a whole number.',
-                'max_value'=>'Ensure this value is less than or equal to %1$d.',
-                'min_value'=>'Ensure this value is greater than or equal to %1$d.',
+                'max_value'=>'Ensure this value is less than or equal to %1$s.',
+                'min_value'=>'Ensure this value is greater than or equal to %1$s.',
             ) );
+    }
+
+    public function __construct( $opts ) {
+        if(array_key_exists('max_value',$opts))
+            $this->max_value=$opts['max_value'];
+        if(array_key_exists('min_value',$opts))
+            $this->min_value=$opts['min_value'];
+        parent::__construct($opts);
+
+        if($this->max_value)
+            $this->validators[] = array(new MaxValueValidator($this->max_value),'execute');
+        if($this->min_value)
+            $this->validators[] = array(new MinValueValidator($this->min_value),'execute');
+    }
+
+    public function to_php($value) {
+        if($value==='') {
+            return null;
+        }
+        if(!is_numeric($value) || intval($value) != $value ) {
+            throw new ValidationError($this->error_messages['invalid']);
+        }
+        return intval($value);
+    }
+
+}
+
+
+class FloatField extends IntegerField {
+    public static function default_error_messages() {
+        return array_merge( parent::default_error_messages(),
+            array( 'invalid'=>'Enter a number.',));
+    }
+
+    public function to_php($value) {
+        if($value==='') {
+            return null;
+        }
+        if(!is_numeric($value)) {
+            throw new ValidationError($this->error_messages['invalid']);
+        }
+        return floatval($value);
     }
 }
 
-// TODO....
-/* 
-class IntegerField(Field):
-    default_error_messages = {
-        'invalid': _(u'Enter a whole number.'),
-        'max_value': _(u'Ensure this value is less than or equal to %(limit_value)s.'),
-        'min_value': _(u'Ensure this value is greater than or equal to %(limit_value)s.'),
-    }
-
-    def __init__(self, max_value=None, min_value=None, *args, **kwargs):
-        super(IntegerField, self).__init__(*args, **kwargs)
-
-        if max_value is not None:
-            self.validators.append(validators.MaxValueValidator(max_value))
-        if min_value is not None:
-            self.validators.append(validators.MinValueValidator(min_value))
-
-    def to_python(self, value):
-        """
-        Validates that int() can be called on the input. Returns the result
-        of int(). Returns None for empty values.
-        """
-        value = super(IntegerField, self).to_python(value)
-        if value in validators.EMPTY_VALUES:
-            return None
-        if self.localize:
-            value = formats.sanitize_separators(value)
-        try:
-            value = int(str(value))
-        except (ValueError, TypeError):
-            raise ValidationError(self.error_messages['invalid'])
-        return value
-*/
-
 
 // TODO:
-// FloatField
 // DecimalField
 
 
@@ -290,7 +249,7 @@ class DateField extends Field {
 
         // TODO: parse custom input formats here...
         try {
-            return new DateTime($value);
+            return new DrongoDate($value);
         } catch (Exception $e) {
         }
 

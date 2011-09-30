@@ -79,7 +79,15 @@ function flatatt($attrs) {
 
     $out = '';
     foreach($attrs as $k=>$v) {
-        $out .= sprintf(' %s="%s"', $k, htmlspecialchars($v));
+
+//        if(is_object($v)) {
+//            if(get_class($v)=='DateTime') {
+                // stupid DateTime has no __toString() implementation. grrr...
+//                $v = $v->format('Y-m-d H:i:s');
+//            }
+//        }
+
+        $out .= sprintf(' %s="%s"', $k, htmlspecialchars((string)$v));
     }
     return $out;
 }
