@@ -275,9 +275,9 @@ class BaseForm
 
     /*
         Returns the raw_value for a particular field name. This is just a
-        convenient wrapper around widget.value_from_datadict.
+        convenient wrapper around widget.value_from_data
     */
-    protected function _raw_value($fieldname) {
+    public function _raw_value($fieldname) {
         $field = $this->fields[$fieldname];
         $prefix = $this->add_prefix($fieldname);
         return $field->widget->value_from_data( $this->data, $this->files, $prefix);
@@ -308,6 +308,7 @@ class BaseForm
         if( $this->_errors ) {
             unset( $this->cleaned_data );
         }
+
     }
 
 

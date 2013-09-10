@@ -245,8 +245,18 @@ class MultipleHiddenInput extends HiddenInput
 
 
 
-// TODO:
-// FileInput
+class FileInput extends Input {
+    public $input_type='file';
+    public $needs_multipart_form = TRUE;
+
+    function value_from_data($data, $files, $name) {
+        // File widgets take data from FILES, not POST"
+        if(array_key_exists($name, $files)) {
+            return $files[$name];
+        }
+        return null;
+    }
+}
 
 class Textarea extends Widget {
     function __construct($attrs=null) {

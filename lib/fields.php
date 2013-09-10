@@ -265,6 +265,69 @@ class DateField extends Field {
 // TimeField
 // DateTimeField
 // FileField
+
+//
+// TODO: redo FileField - should be based on ClearableFileInput
+class FileField extends Field {
+    static function default_widget() { return new FileInput(); }
+    public static function default_error_messages() {
+        return array_merge(parent::default_error_messages(), array(
+            'invalid'=>"No file was submitted. Check the encoding type on the form.",
+            'missing'=>"No file was submitted.",
+            'empty'=>"The submitted file is empty.",
+            'max_length'=>'Ensure this filename has at most %1$s characters (it has %2$s).',
+            //'contradiction'=>'Please either submit a file or check the clear checkbox, not both.'
+            // TODO: add better error messages for PHP file upload errors
+        ));
+    }
+
+    public function __construct($opts) {
+        parent::__construct($opts);
+
+        $this->error_messages = $this->default_error_messages();
+        $this->max_length = array_key_exists('max_length',$opts) ? $opts['max_length'] : null;
+        $this->allow_empty_file = array_key_exists('allow_empty_file',$opts) ? $opts['allow_empty_file'] : FALSE;
+    }
+
+    public function to_php($data) {
+
+        if(!is_array($data)) {
+            return null;
+        }
+        if(count($data)==0) {
+            return null;
+        }
+
+        // TODO: check php file upload error codes
+        // http://www.php.net/manual/en/features.file-upload.errors.php
+        // UPLOAD_ERR_OK, etc...
+
+        // Uploaded File objects should have name and size attributes (at least)
+        if(!array_key_exists('name',$data) || !array_key_exists('size',$data) ) {
+            throw new ValidationError($this->error_messages['invalid']);
+        }
+
+        $file_name = $data['name'];
+        $file_size = $data['size'];
+        if(!is_null($this->max_length) and strlen($file_name) > $this->max_length) {
+            $msg = sprintf( $this->error_messages['max_length'], $this->max_length, strlen($file_name));
+            throw new ValidationError($msg);
+        }
+        if(!$file_name) {
+            throw new ValidationError($this->error_messages['invalid']);
+        }
+        if(!$this->allow_empty_file && !$file_size) {
+            throw new ValidationError($this->error_messages['empty']);
+        }
+
+        return $data;
+    }
+}
+
+
+
+
+// TODO:
 // ImageField
 
 class RegexField extends CharField {
