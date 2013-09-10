@@ -24,7 +24,7 @@ class TestForm extends Form {
                 'help_text'=>'e.g. Fred Bloggs'));
         $this->fields['password'] = new CharField( array('widget'=>'PasswordInput') );
         $this->fields['picker'] = new ChoiceField( array('choices'=>$choices) );
-        $this->fields['desc'] = new CharField( array('choices'=>$choices,'widget'=>'TextArea') );
+        $this->fields['desc'] = new CharField( array('widget'=>'TextArea') );
         $this->fields['magic'] = new BooleanField( array() );
         $this->fields['multipicker'] = new MultipleChoiceField( array('choices'=>$choices) );
         $this->fields['multipicker2'] = new MultipleChoiceField( array('choices'=>$choices, 'widget'=>'CheckboxSelectMultiple'));

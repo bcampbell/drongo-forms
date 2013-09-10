@@ -264,7 +264,6 @@ class DateField extends Field {
 // TODO:
 // TimeField
 // DateTimeField
-// FileField
 
 //
 // TODO: redo FileField - should be based on ClearableFileInput
