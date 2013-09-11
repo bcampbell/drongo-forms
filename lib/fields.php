@@ -297,6 +297,10 @@ class FileField extends Field {
             return null;
         }
 
+        if($data['error'] == UPLOAD_ERR_NO_FILE) {
+            return null;
+        }
+
         // TODO: check php file upload error codes
         // http://www.php.net/manual/en/features.file-upload.errors.php
         // UPLOAD_ERR_OK, etc...
