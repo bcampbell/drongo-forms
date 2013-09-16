@@ -102,6 +102,11 @@ use a `Textarea` widget for multi-line text, eg:
         $form->$fields['address'] = new CharField( array('widget'=>'TextArea') );
 
 
+if you want special css classes for required fields or fields with errors, add
+`error_css_class` and/or `required_css_class` to your form, eg:
+
+        $this->error_css_class = 'fld-error';
+        $this->required_css_class = 'fld-required';
 
 ### Differences from django forms
 

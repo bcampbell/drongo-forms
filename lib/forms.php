@@ -17,7 +17,7 @@ class DrongoTime extends DateTime { function __toString() { return $this->format
 //  documentation/examples
 //  support widget-specific options (eg render_value flag in PasswordInput)
 //  add __toString() support to things where it makes sense...
-class BaseForm
+class BaseForm implements ArrayAccess, Countable
 {
     public function __construct($data=null, $files=null, $opts ) {
         $default_opts = array(
@@ -47,6 +47,42 @@ class BaseForm
         $this->fields = array();
         $this->_errors = null;
     }
+
+    // interfaces for using form as array
+    public function count() {
+    	return count($this->fields);
+    }
+
+    public function offsetExists($offset) {         
+        return (isset($this->fields[$offset]));
+    }   
+
+    // get a boundfield
+    public function offsetGet($offset) {  
+        if ($this->offsetExists($offset)) {
+            return new BoundField($this,$this->fields[$offset],$offset);
+    	}
+    	return false;
+    }
+
+    // TODO:
+    public function offsetSet($offset, $value) {         
+        if ($offset) {
+            $this->fields[$offset] = $value;
+    	}  else {
+            $this->fields[] = $value; 
+    	}
+    }
+
+    public function offsetUnset($offset) {
+        unset($this->fields[$offset]);
+    }
+
+    /* TODO: need an iterator that produces boundfields
+    public function getIterator() {
+        return new ArrayIterator($this->fields);
+    }
+    */
 
 
 
@@ -465,6 +501,10 @@ class BoundField
         return null;
     }
 
+    public function __toString() {
+        return $this->html();
+    }
+
     // Renders this field as an HTML widget.
     public function html() {
         if( $this->field->show_hidden_initial )
@@ -472,7 +512,6 @@ class BoundField
         $out = $this->as_widget();
         return $out;
     }
-
 
     private function _errors() {
         if(array_key_exists($this->name,$this->form->errors))
