@@ -29,7 +29,23 @@ to jump through hoops to use some feature of drongo-forms, then something needs
 fixing.
 
 
+## Reference - Forms
 
+Use array access to add fields to a form.
+Use array access to retrieve fields for reading, or for use in templates.
+
+
+form members:
+is_valid()
+as_table()
+as_ul()
+as_p()
+non_field_errors()
+has_changed()
+
+errors - an array of all the errors on the form
+changed_data -
+media -
 
 ## Reference - Fields
 
@@ -110,8 +126,13 @@ if you want special css classes for required fields or fields with errors, add
 
 ### Differences from django forms
 
+* no fancy metaclass setup - just add fields directly to form classes
 * media
     - need to use full paths (lack of global settings)
     - set form_media member on form for form global media
 * TODO: more!
 
+
+### TODO
+
+* define a class for error messages, with helpers to make them easier to use in templates

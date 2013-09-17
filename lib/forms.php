@@ -48,7 +48,14 @@ class BaseForm implements ArrayAccess, Countable
         $this->_errors = null;
     }
 
-    // interfaces for using form as array
+    // support for array access to easily get at fields:
+
+    // It's a little odd, because writing to a field is used to add (or
+    // remove) unbound fields, but reading yields BoundFields, which are
+    // much more useful in templates.
+    // Not sure if this'll cause problems, but it's how the python version
+    // works and makes forms easier to use...
+
     public function count() {
     	return count($this->fields);
     }
@@ -85,7 +92,7 @@ class BaseForm implements ArrayAccess, Countable
     */
 
 
-
+    // syntactic sugar
     public function __get($v) {
         if( $v=='errors' )
             return $this->_get_errors();
