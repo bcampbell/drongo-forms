@@ -105,7 +105,7 @@ class BaseForm implements ArrayAccess, Countable
         return null;
     }
 
-    /* Returns an ErrorDict for the data provided for the form */
+    /* Returns an Error array for the data provided for the form */
     private function _get_errors() {
         if(is_null($this->_errors)) {
             $this->full_clean();
@@ -365,11 +365,10 @@ class BaseForm implements ArrayAccess, Countable
                 // TODO: special case for file handling
                 $value = $field->clean($value);
                 $this->cleaned_data[$name] = $value;
-                /* TODO: could probably implement this in php:
-                if hasattr(self, 'clean_%s' % name):
-                    value = getattr(self, 'clean_%s' % name)()
-                    self.cleaned_data[name] = value
-                */
+
+                if(method_exists($this, "clean_{$name}")){
+                  $this->cleaned_data[$name] = $this->{"clean_{$name}"}($value);
+                }
             } catch (ValidationError $e) {
                 $this->_errors[$name] = $e->messages;
                 if(array_key_exists($name,$this->cleaned_data)) {
