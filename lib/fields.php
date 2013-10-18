@@ -275,6 +275,8 @@ class FileField extends Field {
             'missing'=>"No file was submitted.",
             'empty'=>"The submitted file is empty.",
             'max_length'=>'Ensure this filename has at most %1$s characters (it has %2$s).',
+            'oversize'=>'File was too large',
+            'upload_failed'=>'Upload failed (error code: %1$d)',
             //'contradiction'=>'Please either submit a file or check the clear checkbox, not both.'
             // TODO: add better error messages for PHP file upload errors
         ));
@@ -297,13 +299,19 @@ class FileField extends Field {
             return null;
         }
 
-        if($data['error'] == UPLOAD_ERR_NO_FILE) {
+        $err = $data['error'];
+        if($err==UPLOAD_ERR_NO_FILE) {
             return null;
         }
+        if($err==UPLOAD_ERR_INI_SIZE || $err==UPLOAD_ERR_FORM_SIZE) {
+            throw new ValidationError($this->error_messages['oversize']);
+        }
 
-        // TODO: check php file upload error codes
-        // http://www.php.net/manual/en/features.file-upload.errors.php
-        // UPLOAD_ERR_OK, etc...
+        if($err!=UPLOAD_ERR_OK) {
+            $msg = sprintf( $this->error_messages['upload_failed'], $err);
+            throw new ValidationError($msg);
+        }
+
 
         // Uploaded File objects should have name and size attributes (at least)
         if(!array_key_exists('name',$data) || !array_key_exists('size',$data) ) {
