@@ -106,6 +106,16 @@ If provided, these arguments ensure that the string is at most or at least the g
 ### URLField
 
 ### ChoiceField
+
+* `choices` array of value => Label pairs eg:
+        array(
+            'r'=>'Red',
+            'g'=>'Green',
+            'b'=>'Blue',
+            'w'=>'White',
+            '1'=>'One',
+            '2'=>'Two',);
+
 ### MultipleChoiceField
 
 
