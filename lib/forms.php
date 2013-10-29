@@ -547,6 +547,11 @@ class BoundField
                 $attrs['id'] = $this->html_initial_id;
         }
 
+        /* html5 'required' attr */
+        if($this->field->required) {
+            $attrs['required'] = "";
+        }
+
         $data = null;
         if(!$this->form->is_bound) {
             /* not bound - use initial value if set */
